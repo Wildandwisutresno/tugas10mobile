@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "175076421876",
+    "project_id": "mobilep9-79fb4",
+    "storage_bucket": "mobilep9-79fb4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:175076421876:android:f90fa5480a95757a31aea1",
+        "android_client_info": {
+          "package_name": "com.example.p9"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAomvgTXxCE563PRxrJoNBarwUzZArc4NI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
