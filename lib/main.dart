@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
+import 'home_page.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -16,10 +18,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       title: 'Firebase Auth',
-      home: AuthWrapper(),
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        useMaterial3: true,
+      ),
+      home: const AuthWrapper(),
     );
   }
 }
@@ -33,10 +39,11 @@ class AuthWrapper extends StatelessWidget {
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Scaffold(
+              body: Center(child: CircularProgressIndicator()));
         }
         if (snapshot.hasData) {
-          return const HomePage();
+          return const HomePage(); // sudah dari file home_page.dart
         }
         return const LoginPage();
       },
@@ -44,9 +51,10 @@ class AuthWrapper extends StatelessWidget {
   }
 }
 
-// ======================================================
-// LOGIN PAGE
-// ======================================================
+// =========================
+// LOGIN PAGE & REGISTER PAGE tetap disini
+// =========================
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -55,69 +63,121 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final email = TextEditingController();
+  final password = TextEditingController();
   final _auth = FirebaseAuth.instance;
 
   Future<void> _login() async {
     try {
       await _auth.signInWithEmailAndPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
+        email: email.text.trim(),
+        password: password.text.trim(),
       );
     } on FirebaseAuthException catch (e) {
-      print(e.message ?? 'Login gagal');
+      _showSnack(e.message ?? "Login gagal");
     }
+  }
+
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
-            ),
-            TextField(
-              controller: _passwordController,
-              decoration: const InputDecoration(labelText: 'Password'),
-              obscureText: true,
-            ),
-            const SizedBox(height: 20),
+      body: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xff6DC8F3), Color(0xff73A1F9)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: const [
+                  BoxShadow(
+                    blurRadius: 15,
+                    color: Colors.black26,
+                    offset: Offset(0, 5),
+                  )
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.lock, size: 60, color: Colors.blue),
+                  const SizedBox(height: 10),
+                  const Text(
+                    "Welcome Back!",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
 
-            // Button Login
-            ElevatedButton(
-              onPressed: _login,
-              child: const Text('Login'),
+                  TextField(
+                    controller: email,
+                    decoration: _inputStyle("Email"),
+                  ),
+                  const SizedBox(height: 10),
+
+                  TextField(
+                    controller: password,
+                    decoration: _inputStyle("Password"),
+                    obscureText: true,
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _login,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        "Login",
+                        style: TextStyle(fontSize: 17),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 15),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const RegisterPage(),
+                        ),
+                      );
+                    },
+                    child: const Text("Belum punya akun? Register di sini"),
+                  ),
+                ],
+              ),
             ),
-
-            const SizedBox(height: 20),
-
-            // Button ke Halaman Register
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const RegisterPage()));
-              },
-              child: const Text("Belum punya akun? Register"),
-            )
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
-// ======================================================
-// REGISTER PAGE BARU
-// ======================================================
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
 
@@ -126,79 +186,118 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final email = TextEditingController();
+  final password = TextEditingController();
   final _auth = FirebaseAuth.instance;
 
   Future<void> _register() async {
     try {
       await _auth.createUserWithEmailAndPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
+        email: email.text.trim(),
+        password: password.text.trim(),
       );
-
-      // Setelah register, kembali ke halaman sebelumnya (otomatis login)
       Navigator.pop(context);
-
     } on FirebaseAuthException catch (e) {
-      print(e.message ?? "Registrasi gagal");
+      _showSnack(e.message ?? "Register gagal");
     }
+  }
+
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Register')),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
-            ),
-            TextField(
-              controller: _passwordController,
-              decoration: const InputDecoration(labelText: 'Password'),
-              obscureText: true,
-            ),
-            const SizedBox(height: 20),
+      body: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xff73A1F9), Color(0xff6DC8F3)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: const [
+                  BoxShadow(
+                    blurRadius: 15,
+                    color: Colors.black26,
+                    offset: Offset(0, 5),
+                  )
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.person_add,
+                      size: 60, color: Colors.blue),
+                  const SizedBox(height: 10),
+                  const Text(
+                    "Daftar Akun Baru",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
 
-            ElevatedButton(
-              onPressed: _register,
-              child: const Text('Register'),
-            )
-          ],
+                  TextField(
+                    controller: email,
+                    decoration: _inputStyle("Email"),
+                  ),
+                  const SizedBox(height: 10),
+
+                  TextField(
+                    controller: password,
+                    decoration: _inputStyle("Password"),
+                    obscureText: true,
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _register,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        "Register",
+                        style: TextStyle(fontSize: 17),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-// ======================================================
-// HOME PAGE + LOGOUT
-// ======================================================
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Home"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              FirebaseAuth.instance.signOut();
-            },
-          )
-        ],
-      ),
-      body: const Center(
-        child: Text("Ini Sudah Login Coy, Ini halaman utama"),
-      ),
-    );
-  }
+InputDecoration _inputStyle(String label) {
+  return InputDecoration(
+    labelText: label,
+    filled: true,
+    fillColor: Colors.grey[200],
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide.none,
+    ),
+  );
 }
